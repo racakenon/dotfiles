@@ -10,3 +10,4 @@ gc https://github.com/ohmyzsh/ohmyzsh/ .oh-my-zsh
 gc https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
 gc https://github.com/romkatv/powerlevel10k .oh-my-zsh/custom/themes/powerlevel10k
 gc https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
