@@ -2,15 +2,11 @@
 alias gc='git clone --depth 1'
 gc https://github.com/wez/wezterm
 gc https://github.com/elkowar/eww
-gc https://github.com/leftwm/leftwm
 gc https://github.com/Riey/kime
-gc https://github.com/jtroo/kanata
+gc https://github.com/YaLTeR/niri
+gc https://github.com/LGFae/swww
 
 gc https://github.com/ohmyzsh/ohmyzsh/ .oh-my-zsh
 gc https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
 gc https://github.com/romkatv/powerlevel10k .oh-my-zsh/custom/themes/powerlevel10k
 gc https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-
-cat > 00-input.rules << EOF
-KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"
-EOF
