@@ -9,11 +9,7 @@ clang
 cmake
 fzf
 git
-gtk-layer-shell
-gtk3
-gtk4
 jq
-libdbusmenu-gtk3
 libdisplay-info
 libinput
 linux-firmware
@@ -28,7 +24,6 @@ refind
 rlwrap
 seatd
 unzip
-vivaldi
 wget
 wl-clipboard
 xcb-util-image
