@@ -30,3 +30,4 @@ xcb-util-image
 xdg-desktop-portal-gtk
 xdg-utils
 xf86-video-amdgpu
+ffmpeg
