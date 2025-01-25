@@ -1,11 +1,8 @@
 #!/bin/sh
 alias gc='git clone --depth 1'
-gc https://github.com/elkowar/eww
 gc https://github.com/Riey/kime
 gc https://github.com/YaLTeR/niri
 gc https://github.com/LGFae/swww
-gc https://github.com/raphamorim/rio.git
+gc https://github.com/wez/wezterm.git
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-wget https://github.com/zen-browser/desktop/releases/download/1.0.1-a.19/zen-specific.AppImage
-wget https://github.com/carapace-sh/carapace-bin/releases/download/v1.0.7/carapace-bin_linux_amd64.tar.gz
