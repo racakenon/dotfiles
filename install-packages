@@ -3,7 +3,6 @@ alias gc='git clone --depth 1'
 gc https://github.com/Riey/kime
 gc https://github.com/YaLTeR/niri
 gc https://github.com/LGFae/swww
-gc https://github.com/wez/wezterm.git
 gc https://github.com/raphamorim/rio.git
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
