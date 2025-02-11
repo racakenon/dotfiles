@@ -2,14 +2,12 @@
 
 | category   | application    |
 |--------------- | --------------- |
-| `wm`   | `leftwm`   |
+| `wm`   | `niri`   |
 | `editor`   | `neovim`   |
-| `terminal`   | `wezterm`   |
+| `terminal`   | `rio`   |
 | `ime`   | `kime`   |
-| `keyboard layout` | `kanata` |
 | `status bar` | `eww` |
-| `compositer` | `picom` |
-| `shell` | `nu` , `zsh` |
+| `shell` | `fish` |
 
 ## install
 
