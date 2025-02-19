@@ -1,11 +1,17 @@
 #!/bin/sh
+mkdir -p $HOME/.local/bin
+mkdir -p $HOME/.local/source
+
 alias gc='git clone --depth 1'
+
 if [[ ! `uname -r` == *WSL* ]]; then
-	gc https://github.com/Riey/kime
+	pushd $HOME/.local/source
+	gc https://github.com/racagogi/kime
 	gc https://github.com/YaLTeR/niri
 	gc https://github.com/LGFae/swww
 	gc https://github.com/raphamorim/rio.git
 	gc https://github.com/wezterm/wezterm
+	popd
 fi
 
 if ! command -v rustup 2>&1 >/dev/null
@@ -17,10 +23,8 @@ fi
 cargo install sccache          
 
 export RUSTC_WRAPPER=sccache
-export CC="sccache gcc"
-export CXX="sccache g++"
-export AR="sccache ar"
-export RANLIB="sccache ranlib"
+export CC="sc-gcc"
+export CXX="sc-g++"
 
 cargo install bottom           
 cargo install cargo-update     
