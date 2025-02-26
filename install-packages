@@ -39,4 +39,5 @@ cargo install tree-sitter-cli
 cargo install typst-cli        
 cargo install vivid            
 cargo install zoxide           
+cargo install handlr-regex
 cargo install --git https://github.com/Myriad-Dreamin/tinymist --locked tinymist
