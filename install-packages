@@ -6,7 +6,7 @@ alias gc='git clone --depth 1'
 
 if [[ ! `uname -r` == *WSL* ]]; then
 	pushd $HOME/.local/source
-	gc https://github.com/racagogi/kime
+	gc https://github.com/Riey/kime
 	gc https://github.com/YaLTeR/niri
 	gc https://github.com/LGFae/swww
 	gc https://github.com/raphamorim/rio.git
