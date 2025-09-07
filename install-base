@@ -1,0 +1,177 @@
+#!/bin/bash
+set -e  # Exit on error
+
+print_step() {
+    echo "==> $1"
+}
+
+print_error() {
+    echo "Error: $1"
+    exit 1
+}
+
+print_warning() {
+    echo "Warning: $1"
+}
+
+# Get user inputs
+DOTFILES_REPO="https://github.com/racakenon/dotfiles"
+echo "Enter configuration values:"
+read -p "Username: " USERNAME
+read -p "Network interface name (check with 'ip link'): " NETWORK_INTERFACE
+read -p "Path to pkglist file: " PKGLIST_PATH
+
+# Validate pkglist file
+if [ ! -f "$PKGLIST_PATH" ]; then
+    print_error "pkglist file not found: $PKGLIST_PATH"
+fi
+
+# Read packages from pkglist
+PACKAGES=$(cat "$PKGLIST_PATH" | tr '\n' ' ')
+print_step "Packages to install: $PACKAGES"
+
+# Check mount status
+print_step "Checking mount status..."
+if ! mountpoint -q /mnt; then
+    print_error "/mnt is not mounted. Mount root partition first."
+fi
+
+if ! mountpoint -q /mnt/boot/efi; then
+    print_warning "/mnt/boot/efi is not mounted. Mount EFI partition."
+    read -p "Continue anyway? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# 1. Update pacman and install git
+print_step "Updating pacman and installing git..."
+pacman -Sy --noconfirm
+pacman -S --noconfirm git
+
+# 2. Clone dotfiles repository
+print_step "Cloning dotfiles repository..."
+if [ -d "/tmp/dotfiles-contents" ]; then
+    rm -rf /tmp/dotfiles-contents
+fi
+git clone $DOTFILES_REPO /tmp/dotfiles-contents
+
+# 3. Check for raca-fonts package
+print_step "Checking for raca-fonts package..."
+RACA_FONTS=""
+if [ -f "/tmp/raca-fonts*.pkg.tar.zst" ]; then
+    RACA_FONTS=$(ls /tmp/raca-fonts*.pkg.tar.zst | head -1)
+    print_step "Found raca-fonts: $RACA_FONTS"
+else
+    print_warning "raca-fonts package not found. Default fonts may be installed."
+    read -p "Path to raca-fonts package (or press Enter to skip): " RACA_FONTS_INPUT
+    if [ -n "$RACA_FONTS_INPUT" ] && [ -f "$RACA_FONTS_INPUT" ]; then
+        RACA_FONTS=$RACA_FONTS_INPUT
+    fi
+fi
+
+# 4. Run pacstrap
+print_step "Installing base system..."
+if [ -n "$RACA_FONTS" ]; then
+    pacstrap /mnt -U $RACA_FONTS
+fi
+pacstrap /mnt $PACKAGES
+
+# 5. Generate fstab
+print_step "Generating fstab..."
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# 6. Create chroot environment script
+print_step "Creating chroot environment script..."
+cat > /mnt/phase1_chroot.sh << 'CHROOT_SCRIPT'
+#!/bin/bash
+set -e
+
+print_step() {
+    echo "==> $1"
+}
+
+print_warning() {
+    echo "Warning: $1"
+}
+
+# Variables passed from outside
+USERNAME=$1
+NETWORK_INTERFACE=$2
+
+# 7. Create user
+print_step "Creating user: $USERNAME"
+useradd -mG wheel -s /bin/fish $USERNAME
+
+# Set user password
+print_step "Set password for user $USERNAME"
+passwd $USERNAME
+
+# Set root password
+print_step "Set root password"
+passwd root
+
+# 8. visudo configuration notice
+print_warning "You need to run visudo to grant sudo privileges to wheel group."
+print_warning "Uncomment this line: %wheel ALL=(ALL:ALL) ALL"
+read -p "Run visudo now? (y/n): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    EDITOR=nvim visudo
+fi
+
+# 9. Install refind
+print_step "Installing refind bootloader..."
+refind-install
+
+# 10. Configure refind-linux.conf
+print_step "Configuring refind-linux.conf..."
+ROOT_PARTITION=$(findmnt -n -o SOURCE /)
+ROOT_PARTUUID=$(blkid -s PARTUUID -o value $ROOT_PARTITION)
+
+cat > /boot/refind_linux.conf << EOF
+"Boot with standard options" "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux-zen.img"
+"Boot to single-user mode"   "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux-zen.img single"
+"Boot with minimal options"  "root=PARTUUID=$ROOT_PARTUUID rw"
+EOF
+
+print_step "refind_linux.conf created (PARTUUID: $ROOT_PARTUUID)"
+
+# 11. Enable systemd services
+print_step "Enabling systemd services..."
+systemctl enable systemd-networkd
+systemctl enable seatd
+
+# 12. Network configuration
+print_step "Configuring network..."
+cat > /etc/systemd/network/20-wired.network << EOF
+[Match]
+Name=$NETWORK_INTERFACE
+
+[Network]
+DHCP=yes
+EOF
+
+print_step "Phase 1 chroot tasks completed!"
+CHROOT_SCRIPT
+
+chmod +x /mnt/phase1_chroot.sh
+
+# 7. Execute chroot
+print_step "Entering chroot environment and running configuration..."
+arch-chroot /mnt /phase1_chroot.sh "$USERNAME" "$NETWORK_INTERFACE"
+
+# Cleanup
+rm /mnt/phase1_chroot.sh
+
+print_step "Phase 1 installation completed!"
+echo ""
+echo "Next steps:"
+echo "1. Reboot the system: reboot"
+echo "2. Proceed with Phase 2"
+echo ""
+print_warning "Before reboot, verify:"
+echo "- visudo configuration is complete"
+echo "- Network interface name is correct (current: $NETWORK_INTERFACE)"
+echo "- refind_linux.conf PARTUUID is correct"
