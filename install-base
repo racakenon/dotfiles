@@ -50,25 +50,15 @@ print_step "Updating pacman and installing git..."
 pacman -Sy --noconfirm
 pacman -S --noconfirm git
 
-# 2. Clone dotfiles repository
-print_step "Cloning dotfiles repository..."
-if [ -d "/tmp/dotfiles-contents" ]; then
-    rm -rf /tmp/dotfiles-contents
-fi
-git clone $DOTFILES_REPO /tmp/dotfiles-contents
-
 # 3. Check for raca-fonts package
-print_step "Checking for raca-fonts package..."
-RACA_FONTS=""
-if [ -f "/tmp/raca-fonts*.pkg.tar.zst" ]; then
-    RACA_FONTS=$(ls /tmp/raca-fonts*.pkg.tar.zst | head -1)
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+RACA_FONTS="$SCRIPT_DIR/raca-fonts-0.0.1-1-any.pkg.tar.zst"
+
+if [ -f "$RACA_FONTS" ]; then
     print_step "Found raca-fonts: $RACA_FONTS"
 else
-    print_warning "raca-fonts package not found. Default fonts may be installed."
-    read -p "Path to raca-fonts package (or press Enter to skip): " RACA_FONTS_INPUT
-    if [ -n "$RACA_FONTS_INPUT" ] && [ -f "$RACA_FONTS_INPUT" ]; then
-        RACA_FONTS=$RACA_FONTS_INPUT
-    fi
+    print_warning "raca-fonts package not found at expected path: $RACA_FONTS"
+    RACA_FONTS=""
 fi
 
 # 4. Run pacstrap
