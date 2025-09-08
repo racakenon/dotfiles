@@ -15,8 +15,8 @@ print_warning() {
 }
 
 # Get user inputs
-DOTFILES_REPO="https://github.com/racakenon/dotfiles"
 PKGLIST_PATH="$(dirname "$0")/pkglist"
+RACA_FONTS="$(dirname "$0")/raca-fonts-0.0.1-1-any.pkg.tar.zst"
 echo "Enter configuration values:"
 read -p "Username: " USERNAME
 read -p "Network interface name (check with 'ip link'): " NETWORK_INTERFACE
@@ -26,9 +26,6 @@ if [ ! -f "$PKGLIST_PATH" ]; then
     print_error "pkglist file not found: $PKGLIST_PATH"
 fi
 
-# Read packages from pkglist
-PACKAGES=$(cat "$PKGLIST_PATH" | tr '\n' ' ')
-print_step "Packages to install: $PACKAGES"
 
 # Check mount status
 print_step "Checking mount status..."
@@ -45,26 +42,12 @@ if ! mountpoint -q /mnt/boot/efi; then
     fi
 fi
 
-# 1. Update pacman and install git
-print_step "Updating pacman and installing git..."
-pacman -Sy --noconfirm
-pacman -S --noconfirm git
 
-# 3. Check for raca-fonts package
-SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-RACA_FONTS="$SCRIPT_DIR/raca-fonts-0.0.1-1-any.pkg.tar.zst"
 
-if [ -f "$RACA_FONTS" ]; then
-    print_step "Found raca-fonts: $RACA_FONTS"
-else
-    print_warning "raca-fonts package not found at expected path: $RACA_FONTS"
-    RACA_FONTS=""
-fi
-
-# 4. Run pacstrap
 print_step "Installing base system..."
+pacstrap /mnt base
 if [ -n "$RACA_FONTS" ]; then
-    pacstrap /mnt -U $RACA_FONTS
+    pacman --root /mnt -U $RACA_FONTS
 fi
 pacstrap /mnt $PACKAGES
 
@@ -121,8 +104,8 @@ ROOT_PARTITION=$(findmnt -n -o SOURCE /)
 ROOT_PARTUUID=$(blkid -s PARTUUID -o value $ROOT_PARTITION)
 
 cat > /boot/refind_linux.conf << EOF
-"Boot with standard options" "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux-zen.img"
-"Boot to single-user mode"   "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux-zen.img single"
+"Boot with standard options" "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux.img"
+"Boot to single-user mode"   "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux.img single"
 "Boot with minimal options"  "root=PARTUUID=$ROOT_PARTUUID rw"
 EOF
 
