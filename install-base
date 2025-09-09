@@ -16,10 +16,10 @@ print_warning() {
 
 # Get user inputs
 DOTFILES_REPO="https://github.com/racakenon/dotfiles"
+PKGLIST_PATH="$(dirname "$0")/pkglist"
 echo "Enter configuration values:"
 read -p "Username: " USERNAME
 read -p "Network interface name (check with 'ip link'): " NETWORK_INTERFACE
-read -p "Path to pkglist file: " PKGLIST_PATH
 
 # Validate pkglist file
 if [ ! -f "$PKGLIST_PATH" ]; then

@@ -1,44 +1,119 @@
-#!/bin/sh
-mkdir -p $HOME/.local/bin
-mkdir -p $HOME/.local/source
+#!/usr/bin/env bash
+set -euo pipefail
 
-alias gc='git clone --depth 1'
+# Directories
+mkdir -p "$HOME/.local/bin"
+mkdir -p "$HOME/.local/source"
+mkdir -p "$HOME/.local/share/fonts"
 
-if [[ ! `uname -r` == *WSL* ]]; then
-	pushd $HOME/.local/source
-	gc https://github.com/Riey/kime
-	gc https://github.com/YaLTeR/niri
-	gc https://github.com/LGFae/swww
-	gc https://github.com/raphamorim/rio.git
-	gc https://github.com/wezterm/wezterm
-	gc https://github.com/DorianRudolph/sirula.git
-	popd
+# Helper: shallow clone (depth=1) for general repos
+gc () {
+  git clone --depth 1 "$@"
+}
+
+# Helper: safe sparse clone (no pushd/popd required)
+clone_sparse () {
+  local url="$1" dir="$2" branch="$3"; shift 3
+  git clone --filter=blob:none --no-checkout "$url" "$HOME/.local/source/$dir"
+  git -C "$HOME/.local/source/$dir" sparse-checkout init --no-cone
+  git -C "$HOME/.local/source/$dir" sparse-checkout set "$@"
+  git -C "$HOME/.local/source/$dir" checkout "$branch"
+}
+
+link_fonts () {
+  local src_dir="$HOME/.local/source/$1"
+  local pattern_rel="$2"
+  local dest_dir="$HOME/.local/share/fonts"
+
+  mkdir -p "$dest_dir"
+  find "$src_dir" -type f -path "$src_dir/$pattern_rel" -exec ln -sf {} "$dest_dir" \;
+}
+
+# Skip graphical/source builds on WSL
+if [[ ! "$(uname -r)" == *WSL* ]]; then
+  # General sources
+  pushd "$HOME/.local/source" >/dev/null
+  gc https://github.com/racakenon/kime
+  gc https://github.com/alacritty/alacritty
+  gc https://github.com/YaLTeR/niri
+  gc https://github.com/LGFae/swww
+  gc https://github.com/DorianRudolph/sirula.git
+  popd >/dev/null
+
+  clone_sparse https://github.com/notofonts/notofonts.github.io.git noto main \
+    "fonts/*/full/ttf/*-Regular.ttf" \
+    "fonts/*/full/ttf/*-Bold.ttf"
+  link_fonts "noto" "fonts/*/full/ttf/*-Regular.ttf"
+  link_fonts "noto" "fonts/*/full/ttf/*-Bold.ttf"
+
+  clone_sparse https://github.com/notofonts/noto-cjk.git noto-cjk main \
+    "Serif/OTF/Korean/*-Regular.ttf" \
+    "Serif/OTF/Korean/*-Bold.ttf" \
+    "Sans/OTF/Korean/*-Regular.ttf" \
+    "Sans/OTF/Korean/*-Bold.ttf"
+  link_fonts "noto-cjk" "Serif/OTF/Korean/*-Regular.ttf"
+  link_fonts "noto-cjk" "Serif/OTF/Korean/*-Bold.ttf"
+  link_fonts "noto-cjk" "Sans/OTF/Korean/*-Regular.ttf"
+  link_fonts "noto-cjk" "Sans/OTF/Korean/*-Bold.ttf"
+
+  clone_sparse https://github.com/orioncactus/pretendard.git pretendard main \
+    "packages/pretendard-gov/dist/public/static/*-Regular.otf" \
+    "packages/pretendard-gov/dist/public/static/*-Bold.otf"
+  link_fonts "pretendard" "packages/pretendard-gov/dist/public/static/*-Regular.otf"
+  link_fonts "pretendard" "packages/pretendard-gov/dist/public/static/*-Bold.otf"
+
+  clone_sparse https://github.com/githubnext/monaspace.git monaspace main \
+    "fonts/Static Fonts/*/*-Regular.otf" \
+    "fonts/Static Fonts/*/*-Bold.otf"
+  link_fonts "monaspace" "fonts/Static Fonts/*/*-Regular.otf"
+  link_fonts "monaspace" "fonts/Static Fonts/*/*-Bold.otf"
+
+  clone_sparse https://github.com/yangheeryu/Gowun-Batang.git gowunbatang master \
+    "fonts/ttf/*.ttf"
+  link_fonts "gowunbatang" "fonts/ttf/*.ttf"
+
+  clone_sparse https://github.com/stipub/stixfonts.git stix master \
+    "fonts/static_otf/*-Bold.otf" \
+    "fonts/static_otf/*-Regular.otf"
+  link_fonts "stix" "fonts/static_otf/*-Regular.otf"
+  link_fonts "stix" "fonts/static_otf/*-Bold.otf"
+
+  clone_sparse https://github.com/ryanoasis/nerd-fonts nerd-fonts master \
+    "patched-fonts/NerdFontsSymbolsOnly/SymbolsNerdFontMono-Regular.ttf"
+  link_fonts "nerd-fonts" "patched-fonts/NerdFontsSymbolsOnly/SymbolsNerdFontMono-Regular.ttf"
+
+  if command -v fc-cache >/dev/null 2>&1; then
+    fc-cache -fv || true
+  fi
 fi
 
-if ! command -v rustup 2>&1 >/dev/null
-then
-	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-	. "$HOME/.cargo/env"
+if ! command -v rustup >/dev/null 2>&1; then
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 fi
 
-cargo install sccache          
+if [ -f "$HOME/.cargo/env" ]; then
+  . "$HOME/.cargo/env"
+fi
+
+cargo install sccache
 
 export RUSTC_WRAPPER=sccache
 export CC="sc-gcc"
 export CXX="sc-g++"
 
-cargo install bottom           
-cargo install cargo-update     
-cargo install du-dust          
-cargo install eza              
-cargo install fd-find          
-cargo install fnm              
-cargo install ripgrep          
-cargo install starship         
-cargo install tokei            
-cargo install tree-sitter-cli  
-cargo install typst-cli        
-cargo install vivid            
-cargo install zoxide           
+cargo install bottom
+cargo install cargo-update
+cargo install du-dust
+cargo install eza
+cargo install fd-find
+cargo install fnm
+cargo install ripgrep
+cargo install starship
+cargo install tokei
+cargo install tree-sitter-cli
+cargo install typst-cli
+cargo install vivid
+cargo install zoxide
 cargo install handlr-regex
 cargo install --git https://github.com/Myriad-Dreamin/tinymist --locked tinymist
+cargo install --git https://github.com/astral-sh/uv uv
