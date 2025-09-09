@@ -2,6 +2,7 @@ alsa-utils
 amd-ucode
 base
 base-devel
+clang
 fish
 git
 github-cli
@@ -20,6 +21,7 @@ refind
 rlwrap
 seatd
 vivaldi
+wayland-protocols
 wl-clipboard
 xdg-desktop-portal-gtk
 xdg-utils

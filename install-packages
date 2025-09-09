@@ -38,6 +38,7 @@ if [[ ! "$(uname -r)" == *WSL* ]]; then
   gc https://github.com/YaLTeR/niri
   gc https://github.com/LGFae/swww
   gc https://github.com/DorianRudolph/sirula.git
+  gc https://github.com/Kitware/CMake.git
   popd >/dev/null
 
   clone_sparse https://github.com/notofonts/notofonts.github.io.git noto main \
