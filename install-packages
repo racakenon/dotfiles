@@ -101,19 +101,12 @@ export RUSTC_WRAPPER=sccache
 export CC="sc-gcc"
 export CXX="sc-g++"
 
-cargo install bottom
 cargo install cargo-update
-cargo install du-dust
 cargo install eza
 cargo install fd-find
 cargo install fnm
 cargo install ripgrep
 cargo install starship
-cargo install tokei
-cargo install tree-sitter-cli
-cargo install typst-cli
 cargo install vivid
 cargo install zoxide
-cargo install handlr-regex
-cargo install --git https://github.com/Myriad-Dreamin/tinymist --locked tinymist
 cargo install --git https://github.com/astral-sh/uv uv
