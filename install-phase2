@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+git clone --bare https://github.com/racakenon/dotfiles-contents $HOME/.dotfiles
+dot checkout
+dot config --local status.showUntrackedFiles nO
+
+mkdir -p "$HOME/.local/bin"
+mkdir -p "$HOME/.local/source"
+
+if ! command -v rustup >/dev/null 2>&1; then
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+fi
+
+if [ -f "$HOME/.cargo/env" ]; then
+	. "$HOME/.cargo/env"
+fi
+
+cargo install sccache
+
+export RUSTC_WRAPPER=sccache
+export CC="sc-gcc"
+export CXX="sc-g++"
+
+cargo install cargo-update
+cargo install eza
+cargo install fd-find
+cargo install fnm
+cargo install ripgrep
+cargo install starship
+cargo install vivid
+cargo install zoxide
+cargo install --git https://github.com/astral-sh/uv uv
+
+./install-fonts
+./install-packages
