@@ -36,7 +36,7 @@ link_fonts () {
 	mkdir -p "$dest_dir"
 	
 	# Remove existing symlinks for this font family
-	find "$dest_dir" -type l -exec sh -c '
+	find "$dest_dir" -type l -exec bash -c '
 		for link; do
 			target=$(readlink "$link")
 			if [[ "$target" == *"/.local/source/'"$1"'/"* ]]; then

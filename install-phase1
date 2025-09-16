@@ -16,6 +16,7 @@ print_warning() {
 
 # Get user inputs
 PKGLIST_PATH="$(dirname "$0")/pkglist"
+PACKAGES=$(cat "$PKGLIST_PATH" | tr '\n' ' ')
 RACA_FONTS="$(dirname "$0")/raca-fonts-0.0.1-1-any.pkg.tar.zst"
 echo "Enter configuration values:"
 read -p "Username: " USERNAME
@@ -46,8 +47,9 @@ fi
 
 print_step "Installing base system..."
 pacstrap /mnt base
-if [ -n "$RACA_FONTS" ]; then
-    pacman --root /mnt -U $RACA_FONTS
+if [ -f "$RACA_FONTS" ]; then
+    cp "$RACA_FONTS" /mnt/tmp/
+    arch-chroot /mnt bash -c "pacman -U /tmp/$(basename "$RACA_FONTS") --noconfirm && rm /tmp/$(basename "$RACA_FONTS")"
 fi
 pacstrap /mnt $PACKAGES
 
