@@ -1,5 +1,0 @@
-#!/bin/sh
-alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
-git clone --bare https://github.com/racakenon/dotfiles-contents $HOME/.dotfiles
-dot checkout
-dot config --local status.showUntrackedFiles nO
