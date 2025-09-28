@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+dot() {
+  /usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME" "$@"
+}
 git clone --bare https://github.com/racakenon/dotfiles-contents $HOME/.dotfiles
 dot checkout
 dot config --local status.showUntrackedFiles nO
@@ -32,5 +34,7 @@ cargo install vivid
 cargo install zoxide
 cargo install --git https://github.com/astral-sh/uv uv
 
-./install-fonts
-./install-packages
+SCRIPT_DIR=$(dirname "$0")
+
+"$SCRIPT_DIR/install-fonts"
+"$SCRIPT_DIR/install-packages"
