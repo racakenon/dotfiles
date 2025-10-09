@@ -86,6 +86,10 @@ clone_sparse https://github.com/notofonts/notofonts.github.io.git noto main \
 link_fonts "noto" "fonts/*/full/ttf/*-Regular.ttf"
 link_fonts "noto" "fonts/*/full/ttf/*-Bold.ttf"
 
+clone_sparse https://github.com/googlefonts/noto-emoji.git noto-emoji main \
+	"fonts/NotoColorEmoji.ttf"
+link_fonts "noto-emoji" "fonts/NotoColorEmoji.ttf"
+
 clone_sparse https://github.com/notofonts/noto-cjk.git noto-cjk main \
 	"Serif/OTF/Korean/*-Regular.otf" \
 	"Serif/OTF/Korean/*-Bold.otf" \
