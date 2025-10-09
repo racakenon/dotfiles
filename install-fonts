@@ -35,17 +35,6 @@ link_fonts () {
 	
 	mkdir -p "$dest_dir"
 	
-	# Remove existing symlinks for this font family
-	find "$dest_dir" -type l -exec bash -c '
-		for link; do
-			target=$(readlink "$link")
-			if [[ "$target" == *"/.local/source/'"$1"'/"* ]]; then
-				rm -f "$link"
-			fi
-		done
-	' sh {} + 2>/dev/null || true
-	
-	# Create new symlinks
 	find "$src_dir" -type f -path "$src_dir/$pattern_rel" -exec ln -sf {} "$dest_dir" \;
 }
 
@@ -98,14 +87,14 @@ link_fonts "noto" "fonts/*/full/ttf/*-Regular.ttf"
 link_fonts "noto" "fonts/*/full/ttf/*-Bold.ttf"
 
 clone_sparse https://github.com/notofonts/noto-cjk.git noto-cjk main \
-	"Serif/OTF/Korean/*-Regular.ttf" \
-	"Serif/OTF/Korean/*-Bold.ttf" \
-	"Sans/OTF/Korean/*-Regular.ttf" \
-	"Sans/OTF/Korean/*-Bold.ttf"
-link_fonts "noto-cjk" "Serif/OTF/Korean/*-Regular.ttf"
-link_fonts "noto-cjk" "Serif/OTF/Korean/*-Bold.ttf"
-link_fonts "noto-cjk" "Sans/OTF/Korean/*-Regular.ttf"
-link_fonts "noto-cjk" "Sans/OTF/Korean/*-Bold.ttf"
+	"Serif/OTF/Korean/*-Regular.otf" \
+	"Serif/OTF/Korean/*-Bold.otf" \
+	"Sans/OTF/Korean/*-Regular.otf" \
+	"Sans/OTF/Korean/*-Bold.otf"
+link_fonts "noto-cjk" "Serif/OTF/Korean/*-Regular.otf"
+link_fonts "noto-cjk" "Serif/OTF/Korean/*-Bold.otf"
+link_fonts "noto-cjk" "Sans/OTF/Korean/*-Regular.otf"
+link_fonts "noto-cjk" "Sans/OTF/Korean/*-Bold.otf"
 
 clone_sparse https://github.com/orioncactus/pretendard.git pretendard main \
 	"packages/pretendard-gov/dist/public/static/*-Regular.otf" \
