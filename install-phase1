@@ -48,8 +48,7 @@ fi
 print_step "Installing base system..."
 pacstrap /mnt base
 if [ -f "$RACA_FONTS" ]; then
-    cp "$RACA_FONTS" /mnt/tmp/
-    arch-chroot /mnt bash -c "pacman -U /tmp/$(basename "$RACA_FONTS") --noconfirm && rm /tmp/$(basename "$RACA_FONTS")"
+	pacman -U -r /tmp $RACA_FONTS
 fi
 pacstrap /mnt $PACKAGES
 
