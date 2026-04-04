@@ -5,6 +5,7 @@ base
 base-devel
 clang
 cmake
+exfatprogs
 fish
 git
 github-cli
@@ -29,5 +30,7 @@ seatd
 vivaldi
 wayland-protocols
 wl-clipboard
+udiskie
+udisks2
 xdg-desktop-portal-gtk
 xdg-utils

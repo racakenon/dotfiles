@@ -99,7 +99,18 @@ fi
 print_step "Installing refind bootloader..."
 refind-install
 
-# 10. Configure refind-linux.conf
+# 10. Install refind theme
+print_step "Installing rEFInd theme..."
+REFIND_DIR="/boot/efi/EFI/refind"
+THEME_TMP=$(mktemp -d)
+git clone --depth 1 https://github.com/bobafetthotmail/refind-theme-regular "$THEME_TMP"
+mkdir -p "$REFIND_DIR/themes"
+cp -r "$THEME_TMP/refind-theme-regular" "$REFIND_DIR/themes/"
+sed -i '/include themes\/refind-theme-regular/d' "$REFIND_DIR/refind.conf"
+echo 'include themes/refind-theme-regular/theme.conf' >> "$REFIND_DIR/refind.conf"
+rm -rf "$THEME_TMP"
+
+# 11. Configure refind-linux.conf
 print_step "Configuring refind-linux.conf..."
 ROOT_PARTITION=$(findmnt -n -o SOURCE /)
 ROOT_PARTUUID=$(blkid -s PARTUUID -o value $ROOT_PARTITION)
@@ -112,12 +123,12 @@ EOF
 
 print_step "refind_linux.conf created (PARTUUID: $ROOT_PARTUUID)"
 
-# 11. Enable systemd services
+# 12. Enable systemd services
 print_step "Enabling systemd services..."
 systemctl enable systemd-networkd
 systemctl enable seatd
 
-# 12. Network configuration
+# 13. Network configuration
 print_step "Configuring network..."
 cat > /etc/systemd/network/20-wired.network << EOF
 [Match]
