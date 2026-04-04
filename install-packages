@@ -5,12 +5,11 @@ mkdir -p "$HOME/.local/bin"
 mkdir -p "$HOME/.local/source"
 
 GIT_REPOS=(
-    "https://github.com/racakenon/kime"
+    "https://github.com/Riey/kime"
     "https://github.com/alacritty/alacritty"
     "https://github.com/YaLTeR/niri"
     "https://github.com/LGFae/swww"
     "https://github.com/DorianRudolph/sirula.git"
-    "https://github.com/Kitware/CMake.git"
 )
 
 gc() {
