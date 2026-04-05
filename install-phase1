@@ -89,9 +89,12 @@ mkfs.btrfs -L arch -f "$ROOT_PART"
 # Mount root partition directly (no subvolumes)
 print_step "Mounting btrfs partition..."
 BTRFS_OPTS="noatime,compress=zstd:1,space_cache=v2,discard=async"
-mount -o "$BTRFS_OPTS" "$ROOT_PART" /mnt
-mkdir -p /mnt/boot/efi
-mount "$EFI_PART" /mnt/boot/efi
+mount -o "${BTRFS_OPTS},subvol=@" "$ROOT_PART" /mnt
+mkdir -p /mnt/{home,.snapshots,var/log,boot}
+mount -o "${BTRFS_OPTS},subvol=@home"      "$ROOT_PART" /mnt/home
+mount -o "${BTRFS_OPTS},subvol=@snapshots" "$ROOT_PART" /mnt/.snapshots
+mount -o "${BTRFS_OPTS},subvol=@var_log"   "$ROOT_PART" /mnt/var/log
+mount "$EFI_PART" /mnt/boot
 
 print_step "Partition layout:"
 lsblk "$DISK"
@@ -101,7 +104,7 @@ print_step "Verifying mount status..."
 if ! mountpoint -q /mnt; then
     print_error "/mnt is not mounted."
 fi
-if ! mountpoint -q /mnt/boot/efi; then
+if ! mountpoint -q /mnt/boot; then
     print_error "/mnt/boot/efi is not mounted."
 fi
 
