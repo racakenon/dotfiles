@@ -86,6 +86,13 @@ print_step "Formatting partitions..."
 mkfs.fat -F32 -n EFI "$EFI_PART"
 mkfs.btrfs -L arch -f "$ROOT_PART"
 
+mount "$ROOT_PART" /mnt
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+btrfs subvolume create /mnt/@snapshots
+btrfs subvolume create /mnt/@var_log
+umount /mnt
+
 # Mount root partition directly (no subvolumes)
 print_step "Mounting btrfs partition..."
 BTRFS_OPTS="noatime,compress=zstd:1,space_cache=v2,discard=async"
