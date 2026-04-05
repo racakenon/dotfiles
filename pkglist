@@ -22,7 +22,6 @@ neovim
 pipewire-alsa
 pipewire-pulse
 wireplumber
-raca-fonts
 refind
 rlwrap
 rsync
