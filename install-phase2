@@ -38,3 +38,40 @@ SCRIPT_DIR=$(dirname "$0")
 
 "$SCRIPT_DIR/install-fonts"
 "$SCRIPT_DIR/install-packages"
+
+export RUSTC_WRAPPER=sccache
+export CC="sc-gcc"
+export CXX="sc-g++"
+
+# Build: alacritty (Wayland only)
+echo "==> Building alacritty..."
+cd "$HOME/.local/source/alacritty"
+cargo build --release --no-default-features --features=wayland
+
+# Build: niri
+echo "==> Building niri..."
+cd "$HOME/.local/source/niri"
+cargo build --release --no-default-features --features dbus --features pipewire
+sudo install -Dm755 resources/niri-session                       /usr/local/bin/niri-session
+sudo install -Dm644 resources/niri.desktop                       /usr/local/share/wayland-sessions/niri.desktop
+sudo install -Dm644 resources/niri-portals.conf                  /usr/local/share/xdg-desktop-portal/niri-portals.conf
+sudo install -Dm644 resources/niri.service                       /etc/systemd/user/niri.service
+sudo install -Dm644 resources/niri-shutdown.target               /etc/systemd/user/niri-shutdown.target
+
+# Build: awww
+echo "==> Building awww..."
+cd "$HOME/.local/source/awww"
+cargo build --release
+
+# Build: sirula
+echo "==> Building sirula..."
+cd "$HOME/.local/source/sirula"
+cargo build --release
+
+# Symlink binaries to ~/.local/bin
+echo "==> Linking binaries..."
+ln -sf "$HOME/.local/source/niri/target/release/niri"             "$HOME/.local/bin/niri"
+ln -sf "$HOME/.local/source/alacritty/target/release/alacritty"   "$HOME/.local/bin/alacritty"
+ln -sf "$HOME/.local/source/awww/target/release/awww"             "$HOME/.local/bin/awww"
+ln -sf "$HOME/.local/source/awww/target/release/awww-daemon"      "$HOME/.local/bin/awww-daemon"
+ln -sf "$HOME/.local/source/sirula/target/release/sirula"         "$HOME/.local/bin/sirula"

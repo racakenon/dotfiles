@@ -9,6 +9,7 @@ exfatprogs
 fish
 git
 github-cli
+gnome-keyring
 gtk-layer-shell
 libdisplay-info
 libinput
@@ -25,6 +26,7 @@ raca-fonts
 refind
 rlwrap
 rsync
+rtkit
 seahorse
 seatd
 vivaldi

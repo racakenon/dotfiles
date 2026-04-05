@@ -8,7 +8,7 @@ GIT_REPOS=(
     "https://github.com/Riey/kime"
     "https://github.com/alacritty/alacritty"
     "https://github.com/YaLTeR/niri"
-    "https://github.com/LGFae/swww"
+    "https://codeberg.org/LGFae/awww"
     "https://github.com/DorianRudolph/sirula.git"
 )
 

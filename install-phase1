@@ -18,33 +18,106 @@ print_warning() {
 PKGLIST_PATH="$(dirname "$0")/pkglist"
 PACKAGES=$(cat "$PKGLIST_PATH" | tr '\n' ' ')
 RACA_FONTS="$(dirname "$0")/raca-fonts-0.0.1-1-any.pkg.tar.zst"
-echo "Enter configuration values:"
-read -p "Username: " USERNAME
-read -p "Network interface name (check with 'ip link'): " NETWORK_INTERFACE
-
 # Validate pkglist file
 if [ ! -f "$PKGLIST_PATH" ]; then
     print_error "pkglist file not found: $PKGLIST_PATH"
 fi
 
+echo "Enter configuration values:"
+read -p "Username: " USERNAME
 
-# Check mount status
-print_step "Checking mount status..."
+echo ""
+echo "Available network interfaces:"
+ip link show | awk '/^[0-9]+:/ {gsub(/:/, "", $2); print "  " $2}'
+echo ""
+read -p "Network interface name: " NETWORK_INTERFACE
+
+echo ""
+echo "============================================"
+echo "  Username         : $USERNAME"
+echo "  Network interface: $NETWORK_INTERFACE"
+echo "  Pkglist          : $PKGLIST_PATH"
+echo "============================================"
+read -p "Proceed with these values? (yes/no): " CONFIRM
+if [ "$CONFIRM" != "yes" ]; then
+    print_error "Aborted."
+fi
+
+# 1. Disk partitioning and btrfs setup
+print_step "Disk setup"
+echo ""
+lsblk
+echo ""
+read -p "Target disk (e.g. /dev/nvme0n1): " DISK
+
+if [ ! -b "$DISK" ]; then
+    print_error "Device $DISK not found."
+fi
+
+print_warning "THIS WILL ERASE ALL DATA ON $DISK"
+read -p "Continue? (yes/no): " CONFIRM
+if [ "$CONFIRM" != "yes" ]; then
+    print_error "Aborted."
+fi
+
+# Wipe existing partition table
+print_step "Wiping $DISK..."
+wipefs -af "$DISK"
+sgdisk --zap-all "$DISK"
+
+# Create GPT partition table and partitions
+print_step "Creating GPT partitions on $DISK..."
+parted "$DISK" --script mklabel gpt
+parted "$DISK" --script mkpart EFI fat32 1MiB 501MiB
+parted "$DISK" --script set 1 esp on
+parted "$DISK" --script mkpart Linux btrfs 501MiB 100%
+
+# Detect partition names (nvme: p1/p2, sata: 1/2)
+if [[ "$DISK" == *nvme* ]]; then
+    EFI_PART="${DISK}p1"
+    ROOT_PART="${DISK}p2"
+else
+    EFI_PART="${DISK}1"
+    ROOT_PART="${DISK}2"
+fi
+
+# Format partitions
+print_step "Formatting partitions..."
+mkfs.fat -F32 -n EFI "$EFI_PART"
+mkfs.btrfs -L arch -f "$ROOT_PART"
+
+# Create btrfs subvolumes
+print_step "Creating btrfs subvolumes..."
+mount "$ROOT_PART" /mnt
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+btrfs subvolume create /mnt/@snapshots
+btrfs subvolume create /mnt/@var_log
+umount /mnt
+
+# Mount with SSD-optimized options
+print_step "Mounting btrfs subvolumes..."
+BTRFS_OPTS="noatime,compress=zstd:1,space_cache=v2,discard=async"
+mount -o "${BTRFS_OPTS},subvol=@" "$ROOT_PART" /mnt
+mkdir -p /mnt/{home,.snapshots,var/log,boot/efi}
+mount -o "${BTRFS_OPTS},subvol=@home"      "$ROOT_PART" /mnt/home
+mount -o "${BTRFS_OPTS},subvol=@snapshots" "$ROOT_PART" /mnt/.snapshots
+mount -o "${BTRFS_OPTS},subvol=@var_log"   "$ROOT_PART" /mnt/var/log
+mount "$EFI_PART" /mnt/boot/efi
+
+print_step "Partition layout:"
+lsblk "$DISK"
+
+# 2. Verify mount status
+print_step "Verifying mount status..."
 if ! mountpoint -q /mnt; then
-    print_error "/mnt is not mounted. Mount root partition first."
+    print_error "/mnt is not mounted."
 fi
-
 if ! mountpoint -q /mnt/boot/efi; then
-    print_warning "/mnt/boot/efi is not mounted. Mount EFI partition."
-    read -p "Continue anyway? (y/n): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
+    print_error "/mnt/boot/efi is not mounted."
 fi
 
-
-
+# 3. Install base system
 print_step "Installing base system..."
 pacstrap /mnt base
 if [ -f "$RACA_FONTS" ]; then
@@ -52,11 +125,11 @@ if [ -f "$RACA_FONTS" ]; then
 fi
 pacstrap /mnt $PACKAGES
 
-# 5. Generate fstab
+# 4. Generate fstab
 print_step "Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# 6. Create chroot environment script
+# 5. Create chroot environment script
 print_step "Creating chroot environment script..."
 cat > /mnt/phase1_chroot.sh << 'CHROOT_SCRIPT'
 #!/bin/bash
@@ -86,7 +159,13 @@ passwd $USERNAME
 print_step "Set root password"
 passwd root
 
-# 8. visudo configuration notice
+# 8. Keyring PAM auto-unlock
+print_step "Configuring GNOME Keyring auto-unlock..."
+sed -i '/^auth.*include.*system-local-login/a auth       optional     pam_gnome_keyring.so' /etc/pam.d/login
+sed -i '/^session.*include.*system-local-login/a session    optional     pam_gnome_keyring.so auto_start' /etc/pam.d/login
+echo 'password   optional     pam_gnome_keyring.so' >> /etc/pam.d/passwd
+
+# 9. Sudo configuration
 print_warning "You need to run visudo to grant sudo privileges to wheel group."
 print_warning "Uncomment this line: %wheel ALL=(ALL:ALL) ALL"
 read -p "Run visudo now? (y/n): " -n 1 -r
@@ -95,7 +174,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     EDITOR=nvim visudo
 fi
 
-# 9. Install refind
+# 10. Install refind
 print_step "Installing refind bootloader..."
 refind-install
 
@@ -123,12 +202,31 @@ EOF
 
 print_step "refind_linux.conf created (PARTUUID: $ROOT_PARTUUID)"
 
-# 12. Enable systemd services
+# 12. Timezone and clock configuration
+print_step "Configuring timezone and clock..."
+ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+printf '0.0 0 0.0\n0\nLOCAL\n' > /etc/adjtime
+
+# 13. Enable systemd services
 print_step "Enabling systemd services..."
 systemctl enable systemd-networkd
+systemctl enable systemd-resolved
+systemctl enable systemd-timesyncd
+systemctl enable rtkit-daemon
+systemctl enable fstrim.timer
 systemctl enable seatd
 
-# 13. Network configuration
+# Symlink resolv.conf for systemd-resolved
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
+# journald size limit
+mkdir -p /etc/systemd/journald.conf.d
+cat > /etc/systemd/journald.conf.d/size.conf << EOF
+[Journal]
+SystemMaxUse=500M
+EOF
+
+# 14. Network configuration
 print_step "Configuring network..."
 cat > /etc/systemd/network/20-wired.network << EOF
 [Match]
