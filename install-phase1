@@ -105,7 +105,7 @@ if ! mountpoint -q /mnt; then
     print_error "/mnt is not mounted."
 fi
 if ! mountpoint -q /mnt/boot; then
-    print_error "/mnt/boot/efi is not mounted."
+    print_error "/mnt/boot/ is not mounted."
 fi
 
 # 3. Install base system
@@ -174,7 +174,7 @@ refind-install
 
 # 10. Install refind theme
 print_step "Installing rEFInd theme..."
-REFIND_DIR="/boot/efi/EFI/refind"
+REFIND_DIR="/boot/EFI/refind"
 THEME_TMP=$(mktemp -d)
 git clone --depth 1 https://github.com/bobafetthotmail/refind-theme-regular "$THEME_TMP/refind-theme-regular"
 mkdir -p "$REFIND_DIR/themes"
@@ -185,13 +185,13 @@ rm -rf "$THEME_TMP"
 
 # 11. Configure refind-linux.conf
 print_step "Configuring refind-linux.conf..."
-ROOT_PARTITION=$(findmnt -n -o SOURCE /)
+ROOT_PARTITION=$(findmnt -n -o SOURCE / | sed 's/\[.*\]//')
 ROOT_PARTUUID=$(blkid -s PARTUUID -o value $ROOT_PARTITION)
 
 cat > /boot/refind_linux.conf << EOF
-"Boot with standard options" "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux.img"
-"Boot to single-user mode"   "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux.img single"
-"Boot with minimal options"  "root=PARTUUID=$ROOT_PARTUUID rw"
+"Boot with standard options" "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap rootflags=subvol=@ initrd=/amd-ucode.img initrd=/initramfs-linux.img"
+"Boot to single-user mode"   "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap rootflags=subvol=@ initrd=/amd-ucode.img initrd=/initramfs-linux.img single"
+"Boot with minimal options"  "root=PARTUUID=$ROOT_PARTUUID rw rootflags=subvol=@"
 EOF
 
 print_step "refind_linux.conf created (PARTUUID: $ROOT_PARTUUID)"
