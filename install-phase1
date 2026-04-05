@@ -198,9 +198,9 @@ ROOT_PARTITION=$(findmnt -n -o SOURCE /)
 ROOT_PARTUUID=$(blkid -s PARTUUID -o value $ROOT_PARTITION)
 
 cat > /boot/refind_linux.conf << EOF
-"Boot with standard options" "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux.img"
-"Boot to single-user mode"   "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap initrd=boot/amd-ucode.img initrd=boot/initramfs-linux.img single"
-"Boot with minimal options"  "root=PARTUUID=$ROOT_PARTUUID rw"
+"Boot with standard options" "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap rootflags=subvol=@ initrd=/amd-ucode.img initrd=/initramfs-linux.img"
+"Boot to single-user mode"   "root=PARTUUID=$ROOT_PARTUUID rw add_efi_memmap rootflags=subvol=@ initrd=/amd-ucode.img initrd=/initramfs-linux.img single"
+"Boot with minimal options"  "root=PARTUUID=$ROOT_PARTUUID rw rootflags=subvol=@"
 EOF
 
 print_step "refind_linux.conf created (PARTUUID: $ROOT_PARTUUID)"
